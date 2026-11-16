@@ -1,53 +1,72 @@
 # 📇 ContactApp
 
-A responsive, layered Contact Management web application built with ASP.NET Core MVC. This project demonstrates full CRUD (Create, Read, Update, Delete) operations, persistent relational database storage with Entity Framework Core, robust two-tier validation mechanisms, search/filtering, and foundational web security practices.
+A layered contact management web application built with **ASP.NET Core MVC** (.NET 9). It provides full CRUD operations with persistent SQLite storage, two-tier validation and search, and also displays news fetched from an external **News Web API**.
 
 ## 🚀 Key Features
-- **Full CRUD Lifecycle:** Create, view, edit, and delete contacts seamlessly with persistent storage.
-- **Persistent Relational Database:** Integrated SQLite storage managed via Entity Framework Core with Code-First migrations.
-- **Two-Tier Validation (Client & Server):**
-  - **Client-Side:** Instant user feedback using jQuery Validate & Microsoft jQuery Unobtrusive scripts without unnecessary round-trips.
-  - **Server-Side:** Strict data integrity enforcement via `ModelState.IsValid` and Data Annotations (`[Required]`, `[EmailAddress]`, `[Phone]`, `[StringLength]`).
-- **Advanced Model Binding & UI Labels:** Type-safe mapping of HTTP form payloads to C# models, utilizing `[Display]` attributes for dynamic form labels.
-- **Search & Filtering:** Dynamic contact filtering via Query String (`q`) without altering underlying storage.
-- **Post-Redirect-Get (PRG) Pattern:** Prevents duplicate form submissions on page refresh across form actions.
-- **CSRF Protection:** Integrated `[ValidateAntiForgeryToken]` tokens on all state-altering POST requests.
-- **Layered Architecture:** Clear separation of concerns between Controllers, Services/Repositories, Data Context, Models, and Views.
-- **Responsive UI:** Clean and accessible layout built using Bootstrap 5 and Razor Tag Helpers.
 
-## 🛠️ Tech Stack & Architecture
+- **Full CRUD:** Create, view, edit and delete contacts with persistent storage.
+- **Persistent database:** SQLite storage managed with Entity Framework Core (Code-First migrations). The database is created and seeded automatically on first run.
+- **Two-tier validation:**
+  - **Client-side:** Instant feedback with jQuery Validation and jQuery Unobtrusive Validation.
+  - **Server-side:** `ModelState.IsValid` checks with Data Annotations (`[Required]`, `[EmailAddress]`, `[Phone]`, `[StringLength]`).
+- **Search:** Filter contacts by first name, last name or full name through a query string (`?q=`).
+- **Post-Redirect-Get (PRG):** Prevents duplicate form submissions on page refresh.
+- **CSRF protection:** `[ValidateAntiForgeryToken]` on all state-changing POST requests.
+- **Custom 404 page** for contacts that do not exist.
+- **Logging:** Create and update operations are logged with `ILogger`.
+- **News integration:** The `/news` page lists articles from the News API and shows their details, using a **Typed HttpClient** (`NewsService`) and a `NewsArticleDto`. API errors are caught and logged, so the app keeps working when the API is unreachable.
+- **Responsive UI:** Built with Bootstrap 5 and Razor Tag Helpers.
+
+## 🛠️ Tech Stack
+
 - **Framework:** ASP.NET Core MVC (.NET 9)
 - **Language:** C#
 - **ORM & Database:** Entity Framework Core 9 with SQLite (Code-First)
-- **Validation Engine:** `System.ComponentModel.DataAnnotations`, jQuery Validation & Unobtrusive
-- **Frontend:** Razor Views (`.cshtml`), HTML5, CSS3, Bootstrap 5
-- **Patterns & Principles:** MVC, Dependency Injection (IoC), Repository Pattern, PRG Pattern, Separation of Concerns
+- **Validation:** Data Annotations, jQuery Validation & Unobtrusive
+- **API Client:** Typed HttpClient with DTOs
+- **Frontend:** Razor Views, HTML5, CSS3, Bootstrap 5
+- **Patterns & Principles:** MVC, Dependency Injection, Repository Pattern, PRG Pattern, Separation of Concerns
 
-📁 Project Structure
+## ▶️ Running
+
+**Prerequisites:** .NET 9 SDK
+
+```bash
+dotnet run --project ContactApp --launch-profile https
+```
+
+Then open **https://localhost:7168**.
+
+> The news page requires the **News API** to be running at `https://localhost:7080/`. This address can be changed in `appsettings.Development.json` (`ApiBaseUrl`).
+
+## 📁 Project Structure
+
+```
 ContactApp/
 ├── Controllers/
-│   └── ContactsController.cs        # Handles HTTP requests, actions, and validation flow
-├── Data/
-│   ├── ContactDbContext.cs          # EF Core DbContext configuring SQLite connection
-│   └── DbSeeder.cs                  # Initial seed data provider
-├── Migrations/                      # EF Core schema snapshots and migration files
+│   ├── ContactsController.cs        # Contact CRUD actions, search and validation flow
+│   ├── NewsController.cs            # News list and details pages
+│   └── HomeController.cs
+├── Contracts/
+│   └── DTOs/
+│       └── NewsArticleDto.cs        # Data shape received from the News API
+├── Migrations/                      # EF Core migrations
 ├── Models/
-│   └── Contact.cs                   # Domain entity with Data Annotation validation rules
+│   └── Contact.cs                   # Domain entity with Data Annotation rules
 ├── Repositories/
-│   ├── IContactRepository.cs        # Abstraction interface for contact operations
-│   ├── EfContactRepository.cs       # Concrete EF Core repository implementation
-│   └── InMemoryContactRepository.cs # In-memory implementation for testing/fallback
+│   ├── ContactDbContext.cs          # EF Core DbContext (SQLite)
+│   ├── EfContactRepository.cs       # EF Core repository implementation
+│   └── DbSeeder.cs                  # Initial sample data
+├── Services/
+│   ├── IContactRepository.cs        # Abstraction for contact operations
+│   ├── InMemoryContactRepository.cs # In-memory implementation (alternative to EF Core)
+│   ├── INewsService.cs
+│   └── NewsService.cs               # Typed HttpClient that calls the News API
 ├── Views/
-│   ├── Contacts/
-│   │   ├── Create.cshtml            # New contact form with client-side validation
-│   │   ├── Edit.cshtml              # Contact update view
-│   │   ├── Details.cshtml           # Detailed contact info view
-│   │   ├── Delete.cshtml            # Contact deletion confirmation view
-│   │   └── Index.cshtml             # Contact listing with search and action buttons
-│   └── Shared/
-│       ├── _Layout.cshtml           # Main site layout and navigation
-│       ├── _ValidationScriptsPartial.cshtml # jQuery validation & unobtrusive script references
-│       └── NotFound.cshtml          # Custom 404 error view
-├── wwwroot/                         # Static assets (Bootstrap, custom CSS, JS libraries)
-├── appsettings.json                 # Configuration and SQLite connection string
-└── Program.cs                       # DI container setup, DbContext registration, and middleware pipeline
+│   ├── Contacts/                    # Index, Create, Edit, Details, Delete, NotFound
+│   ├── News/                        # Index, Details
+│   └── Shared/                      # _Layout, _ValidationScriptsPartial, Error
+├── wwwroot/                         # Static assets (Bootstrap, CSS, JS libraries)
+├── appsettings.json                 # SQLite connection string
+└── Program.cs                       # DI registrations, HttpClient setup, migrations and seeding
+```
